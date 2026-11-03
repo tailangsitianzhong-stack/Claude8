@@ -7,6 +7,8 @@
 | `knowledge/03_blender_basics.md` | Blender 4.x の基本設定・ショートカット・モディファイア・UV・マテリアル・リグ・物理・書き出し |
 | `knowledge/04_human_modeling.md` | 人物モデリング（頭身・作業ポーズ・部位別トポロジー・よくある失敗・侍特有の注意点） |
 | `knowledge/05_visual_study_notes.md` | 画像400枚（刀200・服装200）の観察ノートと寸法表 |
+| `knowledge/06_research_report_swordsmanship_animation.md` | 第1フェーズ研究レポート（剣術・身体力学・Ghost of Tsushima・Blender技術、A〜H） |
+| `knowledge/07_animation_production_standards.md` | 侍戦闘アニメーション制作基準 v0.1（チェックリスト・フレーム配分・受け入れ基準） |
 | `references/*.csv` | 画像カタログ（Met Open Access, CC0）：タイトル・年代・素材・寸法・URL |
 | `tools/collect_met.py` | 画像の再取得スクリプト（`python3 tools/collect_met.py katana 200 out --download`） |
 | `tools/contact_sheet.py` | 画像を一覧シート化 |
