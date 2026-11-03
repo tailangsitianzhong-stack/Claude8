@@ -60,8 +60,8 @@ def _camera(name, loc, target, lens=85, ortho=None):
 
 def render_all(out, height=1.69, face_z=1.58, prefix="", views=None):
     sc = bpy.context.scene
-    mid = height * 0.52
-    dist = 7.5
+    mid = height * 0.53
+    dist = 5.6
     cams = {
         "front": ((0, -dist, mid), (0, 0, mid), 85),
         "side": ((dist, 0, mid), (0, 0, mid), 85),
@@ -69,6 +69,7 @@ def render_all(out, height=1.69, face_z=1.58, prefix="", views=None):
         "three_quarter": ((-dist * 0.707, -dist * 0.707, mid), (0, 0, mid), 85),
         "face": ((-0.25, -0.95, face_z + 0.02), (0, 0, face_z - 0.01), 100),
         "face_side": ((0.98, -0.12, face_z + 0.02), (0, 0, face_z - 0.01), 100),
+        "face_45": ((-0.70, -0.70, face_z + 0.02), (0, -0.02, face_z - 0.01), 100),
     }
     res_full = (sc.render.resolution_x, sc.render.resolution_y)
     for name, (loc, tgt, lens) in cams.items():
@@ -76,6 +77,7 @@ def render_all(out, height=1.69, face_z=1.58, prefix="", views=None):
             continue
         cam = _camera("REV_Cam_" + name, loc, tgt, lens)
         sc.camera = cam
+        _rig_facing("back" in name)
         if name.startswith("face"):
             sc.render.resolution_x, sc.render.resolution_y = 1400, 1400
         else:
@@ -83,3 +85,45 @@ def render_all(out, height=1.69, face_z=1.58, prefix="", views=None):
         sc.render.filepath = os.path.join(out, f"{prefix}{name}.png")
         bpy.ops.render.render(write_still=True)
     sc.render.resolution_x, sc.render.resolution_y = res_full
+
+
+def render_closeups(out, joints, views=None):
+    """Hand, foot and torso close-ups framed from the anatomical joint centres."""
+    sc = bpy.context.scene
+    full = (sc.render.resolution_x, sc.render.resolution_y)
+    J = joints
+    hand = (J["joint-l-hand"] + J["joint-l-finger-3-2"]) / 2
+    foot = (J["joint-l-ankle"] + J["joint-l-foot-1"]) / 2 + Vector((0, 0, -0.02))
+    chest_z = (J["joint-l-shoulder"].z + J["joint-pelvis"].z) / 2
+    shots = {
+        "hand_dorsal": (hand + Vector((0.25, -0.35, 0.30)), hand, 100, (1400, 1400)),
+        "hand_palm": (hand + Vector((-0.10, -0.45, -0.10)), hand, 100, (1400, 1400)),
+        "foot": (foot + Vector((0.30, -0.45, 0.22)), foot, 100, (1400, 1000)),
+        "foot_medial": (foot + Vector((-0.36, -0.78, 0.07)), foot + Vector((0, 0.02, 0.01)), 85, (1400, 1000)),
+        "torso_front": (Vector((0, -2.4, chest_z + 0.05)), Vector((0, 0, chest_z)), 85, (1200, 1400)),
+        "torso_back": (Vector((0, 2.4, chest_z + 0.05)), Vector((0, 0, chest_z)), 85, (1200, 1400)),
+    }
+    for name, (loc, tgt, lens, res) in shots.items():
+        if views and name not in views and "closeups" not in views:
+            continue
+        cam = _camera("REV_Cam_" + name, loc, tgt, lens)
+        sc.camera = cam
+        _rig_facing("back" in name)
+        sc.render.resolution_x, sc.render.resolution_y = res
+        sc.render.filepath = os.path.join(out, f"{name}.png")
+        bpy.ops.render.render(write_still=True)
+    sc.render.resolution_x, sc.render.resolution_y = full
+    _rig_facing(False)
+
+
+def _rig_facing(back):
+    """Rotate the review light rig 180 deg about Z so back views are lit like front views."""
+    import math as _m
+    for ob in bpy.data.objects:
+        if (ob.type == "LIGHT" and ob.name.startswith("REV_")) or ob.name == "REV_Wall":
+            want = 1 if back else 0
+            have = ob.get("rev_flipped", 0)
+            if want != have:
+                ob.location.x, ob.location.y = -ob.location.x, -ob.location.y
+                ob.rotation_euler.z += _m.pi
+                ob["rev_flipped"] = want

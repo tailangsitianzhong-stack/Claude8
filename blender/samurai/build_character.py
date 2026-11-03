@@ -12,6 +12,7 @@ import bpy  # noqa: E402
 import build_body as BB  # noqa: E402
 import lookdev as LD  # noqa: E402
 import render_views as RV  # noqa: E402
+import sculpt_detail as SD  # noqa: E402
 
 A = BB.ARGS
 arg = BB.arg
@@ -43,6 +44,8 @@ def main():
     masks = LD.compute_masks(body, eyes, body_index)
     LD.nails(body, joints)
     body.data.materials.append(LD.mat_skin())
+    if "--nodetail" not in A:
+        SD.add_detail(body, joints, masks, eyes, levels=2)
 
     LD.make_eyes(eyes, c_head)
     hair_m = LD.mat_hair("M_Hair_Black", 1.0, 0.03, 0.30)
@@ -76,6 +79,7 @@ def main():
         before = set(bpy.data.objects)
         RV.render_all(arg("--out"), height=BB.TARGET_HEIGHT_M,
                       face_z=(eyes[0][1].z + eyes[1][1].z) / 2 - 0.01, views=views)
+        RV.render_closeups(arg("--out"), joints, views=views)
         for o in set(bpy.data.objects) - before:
             LD.link(o, rev)
         if blend:

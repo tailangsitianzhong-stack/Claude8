@@ -154,7 +154,7 @@ def mat_skin():
     r2 = N.new("ShaderNodeMix"); r2.data_type = "FLOAT"; r2.location = (-400, -450)
     L.new(sep.outputs["Green"], r2.inputs[0]); L.new(r.outputs[0], r2.inputs[2]); r2.inputs[3].default_value = 0.30
     r3 = N.new("ShaderNodeMix"); r3.data_type = "FLOAT"; r3.location = (-200, -450)
-    L.new(nail.outputs["Fac"], r3.inputs[0]); L.new(r2.outputs[0], r3.inputs[2]); r3.inputs[3].default_value = 0.18
+    L.new(nail.outputs["Fac"], r3.inputs[0]); L.new(r2.outputs[0], r3.inputs[2]); r3.inputs[3].default_value = 0.32
     L.new(r3.outputs[0], bsdf.inputs["Roughness"])
 
     # micro surface: pores (voronoi) + fine wrinkles (noise)
@@ -171,9 +171,9 @@ def mat_skin():
     L.new(bump.outputs[0], bsdf.inputs["Normal"])
 
     bsdf.subsurface_method = "RANDOM_WALK_SKIN"
-    bsdf.inputs["Subsurface Weight"].default_value = 1.0
+    bsdf.inputs["Subsurface Weight"].default_value = 0.85
     bsdf.inputs["Subsurface Radius"].default_value = (1.0, 0.38, 0.22)
-    bsdf.inputs["Subsurface Scale"].default_value = 0.0035
+    bsdf.inputs["Subsurface Scale"].default_value = 0.0018
     bsdf.inputs["IOR"].default_value = 1.4
     bsdf.inputs["Specular IOR Level"].default_value = 0.5
     bsdf.inputs["Coat Weight"].default_value = 0.0
@@ -406,7 +406,7 @@ def nails(body, joints):
     w = smooth_weights(me, w, 1)
     attr = me.attributes.new("NailMask", "FLOAT", "POINT")
     for i, v in enumerate(me.vertices):
-        attr.data[i].value = min(1.0, w[i] * 2.2)
+        attr.data[i].value = max(0.0, min(1.0, (min(1.0, w[i] * 2.2) - 0.55) * 2.5))
     return w
 
 
@@ -445,7 +445,7 @@ def make_eyes(eyes, coll):
 # =================================================================== strands
 def surface_bvh(body):
     """BVH of the body at RENDER subdivision level (hair must sit on the rendered skin)."""
-    sub = body.modifiers.get("Subdivision")
+    sub = body.modifiers.get("Subdivision") or body.modifiers.get("Multires")
     keep = sub.levels if sub else None
     if sub:
         sub.levels = sub.render_levels
@@ -542,8 +542,10 @@ def make_scalp_hair(body, masks, coll, mat, count=18000, tuft=3500):
             else:
                 d = d0
             # ray from outside towards the head centre to find the scalp
-            o = C + d * 0.25
-            hit = bvh.ray_cast(o, -d, 0.3)
+            # cast from inside the skull outward: the first hit is the scalp, never the ear
+            hit = bvh.ray_cast(C, d, 0.3)
+            if hit[0] is None:
+                hit = bvh.ray_cast(C + d * 0.25, -d, 0.3)
             surf = hit[0] if hit[0] else C + d * 0.1
             r = (surf - C).length
             if r_prev is not None and r > r_prev + 0.005:   # ray hit the ear: stay on the skull
@@ -645,6 +647,8 @@ def make_scalp_hair(body, masks, coll, mat, count=18000, tuft=3500):
 def strands_on_region(body, weights, count, length, direction_fn, coll, name, mat,
                       r_root=0.00004, r_tip=0.000012, npts=6, lift=0.25, thresh=0.5, curl=0.0):
     pts = sample_surface(body, weights, count, thresh=thresh)
+    bvh, _ = surface_bvh(body)                      # roots on the rendered (sculpted) skin
+    pts = [(project(bvh, p, 0.01)[0], n) for p, n in pts]
     strands = []
     for p, nrm in pts:
         d = direction_fn(p, nrm)

@@ -98,6 +98,7 @@ DETAILS = {
     # --- hands: working hands
     "hands/l-hand-fingers-diameter-incr": 0.15, "hands/r-hand-fingers-diameter-incr": 0.15,
     "hands/measure-wrist-circ-incr": 0.20,
+    "hands/l-hand-scale-decr": 0.45, "hands/r-hand-scale-decr": 0.45,
     # --- legs: low stance strength (thigh, calf)
     "legs/l-upperleg-muscle-incr": 0.40, "legs/r-upperleg-muscle-incr": 0.40,
     "legs/l-lowerleg-muscle-incr": 0.35, "legs/r-lowerleg-muscle-incr": 0.35,

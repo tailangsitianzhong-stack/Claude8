@@ -11,6 +11,7 @@
 | `knowledge/07_animation_production_standards.md` | 侍戦闘アニメーション制作基準 v0.1（チェックリスト・フレーム配分・受け入れ基準） |
 | `knowledge/08_character_build_notes.md` | 侍キャラクター人体モデル制作ノート（ライセンス・構成・限界） |
 | `deliverables/phase2_body/` | 人体モデル v01（.blend）と確認画像 |
+| `deliverables/phase2_body_v02/` | 人体モデル v02（Multires 解剖ディテール, .blend）と確認画像12枚 |
 | `blender/samurai/*.py` | キャラクター生成スクリプト（CC0ベース＋独自造形） |
 | `references/*.csv` | 画像カタログ（Met Open Access, CC0）：タイトル・年代・素材・寸法・URL |
 | `tools/collect_met.py` | 画像の再取得スクリプト（`python3 tools/collect_met.py katana 200 out --download`） |
